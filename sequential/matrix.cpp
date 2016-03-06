@@ -65,15 +65,19 @@ ostream & operator << ( ostream & os, const CIndexException & in )
 class CMatrix
 {
 private:
-	int rows;
-	int rmax;
-	int cols;
+	uint64_t rows;
+	uint64_t rmax;
+	uint64_t cols;
 	double ** m_Matrix;
+	bool isSubMatrix
 public:
 	CMatrix ( int r = 0, int c = 0, bool ctrl = 0 )
 	{	
+		isSubMatrix = false;
+
 		cols = c;
 		m_Matrix = new double* [rows = r];
+
 		for (int i = 0; i < rows; ++i)
 			m_Matrix[i] = new double [cols];	
 		if (!ctrl)
@@ -88,34 +92,52 @@ public:
 
 	CMatrix ( const CMatrix & right )
 	{
+		isSubMatrix = false;
+
 		cols = right.cols;
 		rows = right.rows;
 		m_Matrix = new double* [rows];
+
 		for (int i = 0; i < rows; ++i)
 			m_Matrix[i] = new double [cols];
 		for (int i = 0; i < rows; ++i)
-			for (int j = 0; j < cols; ++j)
-				{
+			for (int j = 0; j < cols; ++j){
 					m_Matrix[i][j] = right.m_Matrix[i][j];
 				}
 	}
+
+	//constructs submatrix of right without copying its content
+	CMatrix (const CMatrix & right, uint64_t rows, uint64_t cols)
+	{
+		isSubMatrix = true;
+
+		this.cols = cols;
+		this.rows = rows;
+		m_Matrix = right.m_Matrix
+	}
+
 	~CMatrix ()
 	{
-		for ( int i = 0; i < rows; ++i )
-			delete [] m_Matrix[i];
-		delete [] m_Matrix;
+		if (isSubMatrix == false){
+			for (int i = 0; i < rows; ++i){
+				delete [] m_Matrix[i];
+			}
+			delete [] m_Matrix;
+		}
 	}
 
 	CMatrix & operator = ( const CMatrix & right )
 	{
 		if ( this == &right ) return *this;
-		freeMatrix ( m_Matrix, rows );
-		cols = right.cols;
-		rows = right.rows;
-		m_Matrix = new double* [rows];
-		for (int i = 0; i < rows; ++i)
-			m_Matrix[i] = new double [cols];
-
+		freeMatrix( m_Matrix, rows );
+		if (cols != right.cols || rows != right.rows){
+			cols = right.cols;
+			rows = right.rows;
+			m_Matrix = new double* [rows];
+		
+			for (int i = 0; i < rows; ++i)
+				m_Matrix[i] = new double [cols];
+		}
 		for (int i = 0; i < rows; ++i)
 			for (int j = 0; j < cols; ++j)
 				{
@@ -202,11 +224,24 @@ public:
 
     Proxy operator [] ( const int r ) const
     {
-        return Proxy ( m_Matrix[r], r, rows, cols );
+        return Proxy( m_Matrix[r], r, rows, cols );
+    }
+
+    uint64_t getWidth()
+    {
+    	return cols;
+    }
+
+    uint64_t getHeight()
+    {
+    	return rows;
     }
 
 	friend ostream & operator << ( ostream & os, const CMatrix & in );
 	friend istream & operator >> ( istream & is, CMatrix & out );
+	friend CMatrix strassenMult(const CMatrix & left, const CMatrix & right);
+	friend CMatrix strassenRecursion(const CMatrix & left, const CMatrix & right);
+
 };
 
 //-----------------------------------------------------------------------//
