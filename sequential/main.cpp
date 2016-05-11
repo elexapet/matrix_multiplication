@@ -12,14 +12,16 @@ int main(int argc, char const *argv[])
 {
 	CMatrix matrixA;
 	CMatrix matrixB;
-	ifstream infileA("matrixA.txt");
-	ifstream infileB("matrixB.txt");
+	ifstream infileA("../matrix1024.txt");
+	ifstream infileB("../matrix1024.txt");
 
 	if (!infileA.good() || !infileB.good()){
 		cerr << "Error opening 'matrixA.txt' or 'matrixB.txt'\n";
 		return 1;
 	}
 
+	cout << "reading\n";
+	
 	infileA >> matrixA;
 	infileB >> matrixB;
 
@@ -32,17 +34,23 @@ int main(int argc, char const *argv[])
 	//cout << "\n\n";
 	//cout << matrixB;
 	//cout << "\n\n";
-	cout << "Normal:\n" << matrixA*matrixB;
-	cout << "\n\n";
+	ofstream outfileC("matrixNormal");
+	ofstream outfileD("matrixStrassen");
+	CMatrix c, d;
+
+	cout << "executing\n";
+
+	
 	try{
-		cout << "Strassen:\n" << strassenMult(matrixA,matrixB);
+		outfileC << matrixA * matrixB;
+		outfileD << strassenMult(matrixA,matrixB);
 	}catch(CSizeException &e){
 		cout << e << '\n';
 	}catch(CIndexException &e){
 		cout << e << '\n';
 	}catch(CSubviewAssigmentException &e){
 		cout << e << '\n';
-	}
+	}	
 
 	return 0;
 }

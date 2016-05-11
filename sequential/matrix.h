@@ -29,7 +29,7 @@ private:
 	uint64_t offcols; //Offset for submatrices columns beginning
 	uint64_t rows; //Allocated rows
 	uint64_t cols; //Allocated columns
-	uint64_t rowsAllocated; //Used for matrice parsing
+	uint64_t rowsAllocated;
 	double ** m_Matrix; //2D array
 	bool isSubMatrice; //Submatrice mark
 public:

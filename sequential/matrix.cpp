@@ -112,10 +112,7 @@ CMatrix::CMatrix (const CMatrix & right, uint64_t fromRows, uint64_t fromCols, u
 CMatrix::~CMatrix ()
 {
 	if (isSubMatrice == false){
-		for (uint64_t i = 0; i < rows; ++i){
-			delete [] m_Matrix[i];
-		}
-		delete [] m_Matrix;
+		freeMatrix(m_Matrix, rowsAllocated);
 	}
 }
 
@@ -243,10 +240,19 @@ ostream & operator << ( ostream & os, const CMatrix & in )
 istream & operator >> ( istream & is, CMatrix & out )
 {
 	uint64_t unpaired = 0, r = 0, c, refc = 0, rowsAllocated = 64, cmax = 64;
-	CMatrix tmp ( rowsAllocated, cmax );
 	double num;
 	char zn;
+	uint64_t msize;
 
+	is >> msize;
+
+	freeMatrix ( out.m_Matrix, out.rows );
+	out.cols = msize;
+	out.rows = msize;
+	out.m_Matrix = new double* [out.rows];
+	for (uint64_t i = 0; i < out.rows; ++i)
+	out.m_Matrix[i] = new double [out.cols];
+	
 	is >> zn;
 	if ( zn != '{' ) { is.setstate (ios::failbit); return is; }
 	do
@@ -260,21 +266,8 @@ istream & operator >> ( istream & is, CMatrix & out )
 			{
 				is >> num;
 				if ( !is ) return is;
-				tmp.m_Matrix[r][c] = num;
+				out.m_Matrix[r][c] = num;
 				c++;
-				if ( c >= cmax && !refc )
-				{
-					cmax *= 2;
-					CMatrix reloc = tmp;
-					tmp.~CMatrix();
-					CMatrix tmp ( rowsAllocated, cmax );
-					for (uint64_t i = 0; i < r; ++i)
-						for (uint64_t j = 0; j < c; ++j)
-						{
-							tmp[i][j] = reloc[i][j];
-						}
-					tmp.~CMatrix();
-				}
 				is >> zn;
 			} while ( zn == ',' );
 			if ( zn == '}' )
@@ -286,35 +279,14 @@ istream & operator >> ( istream & is, CMatrix & out )
 			else break;
 		}
 		else break;
-		r++; 
-		if ( r >= rowsAllocated )
-		{
-			rowsAllocated *= 2;
-			CMatrix reloc = tmp;
-			tmp.~CMatrix();
-			CMatrix tmp ( rowsAllocated, cmax );
-			for (uint64_t i = 0; i < r; ++i)
-				for (uint64_t j = 0; j < refc; ++j)
-				{
-					tmp[i][j] = reloc[i][j];
-				}	
-			reloc.~CMatrix();
-		} 
+		r++;
 	} while ( is.get() == ',' );
 	if ( unpaired ) { is.setstate (ios::failbit); return is; }
 	is >> zn;
 	if ( zn != '}' )  { is.setstate (ios::failbit); return is; }
 
-	freeMatrix ( out.m_Matrix, out.rows );
-	out.cols = refc;
-	out.rows = r;
-	out.m_Matrix = new double* [out.rows];
-	for (uint64_t i = 0; i < out.rows; ++i)
-		out.m_Matrix[i] = new double [out.cols];
-		
-	for (uint64_t i = 0; i < out.rows; ++i)
-		for (uint64_t j = 0; j < out.cols; ++j)
-			out.m_Matrix[i][j] = tmp[i][j];
+	out.rowsAllocated = rowsAllocated;
+
 	return is;
 }
 
